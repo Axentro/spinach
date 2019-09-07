@@ -1,22 +1,16 @@
-# require "option_parser"
+require "option_parser"
 require "myhtml"
 require "file_utils"
 require "colorize"
 
-# location : String = "./spec/**/*"
+location : String = "spec"
 
-# OptionParser.parse! do |parser|
-#   parser.banner = "Usage: spinach [arguments]"
-#   parser.on("-l LOCATION", "--location=LOCATION", "Location of test cases") do |loc|
-#     location = loc
-#   end
-# end
-
-# class Object
-#   macro methods
-#     {{ @type.methods}}
-#   end
-# end
+OptionParser.parse! do |parser|
+  parser.banner = "Usage: spinach [arguments]"
+  parser.on("-l LOCATION", "--location=LOCATION", "Location of specs (defaults to specs dir)") do |loc|
+    location = loc
+  end
+end
 
 enum AssertKind
   METHOD
@@ -107,12 +101,12 @@ abstract class SpinachTestCase
     {"none": ->(args : Array(String)) { "" }}
   end
 
-  def run(node_type)
+  def run(node_type, template_path)
     name = node_type.to_s.underscore
-    template = "#{__DIR__}/../spec/#{name}.html"
+    template = "#{__DIR__}/../../../#{template_path}/#{name}.html"
     parser = Myhtml::Parser.new(File.read(template))
     commands = locate_commands(parser)
-    execute_commands(commands, node_type, name, parser)
+    execute_commands(commands, node_type, name, parser, template_path)
   end
 
   def locate_commands(parser)
@@ -184,7 +178,7 @@ abstract class SpinachTestCase
     {variable_name: data.first, method: data.last}
   end
 
-  def execute_commands(commands, node_type, name, parser)
+  def execute_commands(commands, node_type, name, parser, template_path)
     report_data = [] of ReportData
     klass = node_type.new
     commands.each do |command|
@@ -219,7 +213,7 @@ abstract class SpinachTestCase
       end
     end
     generate_cli_reports(report_data, name)
-    generate_html_reports(report_data, name, parser)
+    generate_html_reports(report_data, name, parser, template_path)
     {report_data: report_data, name: name}
   end
 
@@ -230,8 +224,8 @@ abstract class SpinachTestCase
     end
   end
 
-  def generate_html_reports(report_data, name, parser)
-    report_path = "#{__DIR__}/../spec/reports"
+  def generate_html_reports(report_data, name, parser, template_path)
+    report_path = "#{__DIR__}/../../../#{template_path}/reports"
     FileUtils.mkdir_p(report_path) unless File.exists?(report_path)
     target_out = "#{report_path}/#{name}.report.html"
 
@@ -292,7 +286,7 @@ def test_summary(results)
 end
 
 results = all_test_cases.map do |test|
-  test.new.run(test)
+  test.new.run(test, location)
 end
 
 test_summary(results)
