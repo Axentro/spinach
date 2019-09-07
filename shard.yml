@@ -1,5 +1,5 @@
 name: spinach
-version: 0.1.0
+version: 0.0.2
 
 authors:
   - Kingsley Hendrickse <kingsley.hendrickse@gmail.com>
@@ -7,7 +7,7 @@ authors:
 dependencies:
   myhtml:
     github: kostya/myhtml
-    
+
 crystal: 0.30.1
 
 license: MIT

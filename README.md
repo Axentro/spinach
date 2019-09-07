@@ -93,6 +93,10 @@ To run a spec you can do the following:
 
 `crystal run spec/*.cr` or `crystal run spec/individual_file.cr`
 
+if you want to put your specs somewhere else you can also do this:
+
+`crystal run spec/spinach/*.cr -- -l "spec/spinach"`
+
 There is a basic command line report:
 
 ![](.README/cli.png)
