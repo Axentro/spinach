@@ -30,9 +30,9 @@ There are 3 directives:
 * set
 * execute
 
-In your HTML you use these to write the specs. See below.
+In your HTML you use these to write the specs. See below. See also the specs of this project for examples.
 
-### Set Variable 
+### Set Variable
 
 ```html
 <p>
@@ -83,11 +83,11 @@ A second way to use assert_equals is when there is just a variable being asserte
 
 This will store the result of the method `greeting_for` in a result `HashMap` which you can then use in later asserts.
 
-When returning a result in an execute you **MUST** return a `HashMap` 
+When returning a result in an execute you **MUST** return a `HashMap`
 
 ![](.README/execute_function.png)
 
-## Running 
+## Running
 
 To run a spec you can do the following:
 
