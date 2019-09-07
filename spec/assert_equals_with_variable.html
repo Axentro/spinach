@@ -1,0 +1,29 @@
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/spacelab/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Assert Equals with Variable</h1>
+    <h4>This is an example of setting a variable and using <b>assert_equals</b>.</h4>
+    <br/>
+    <blockquote>
+      <p>
+        If my name is <b spinach:set="#username">Chuck Norris</b>.<br/>
+        Then my username should be <b spinach:assert_equals="#username">Chuck Norris</b>.
+      </p>
+    </blockquote>
+
+    <blockquote>
+      <p>
+        If my name is <b spinach:set="#username2">Chuck Norris</b>.<br/>
+        Then I update my username to <b spinach:set="#username2">Bob</b><br/>
+        Then my username should be <b spinach:assert_equals="#username2">Chuck Norris</b>.
+      </p>
+    </blockquote>
+  </div>
+</body>
+
+</html>

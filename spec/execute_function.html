@@ -1,0 +1,24 @@
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/spacelab/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Execute Function</h1>
+    <h4>This is an example of executing a function using <b>execute</b>.</h4>
+    <br/>
+    <blockquote>
+      <p spinach:execute="#greeting = greeting_for(#firstname, #lastname)">
+        The greeting <b spinach:assert_equals="#greeting.login_greeting">Hello Bob!</b><br/>
+        And the message <b spinach:assert_equals="#greeting.login_message">Your last name is Bobbington!</b><br/>
+        should be given to user <b spinach:set="#firstname">Bob</b> <b spinach:set="#lastname">Bobbington</b><br/>
+        when he logs in.
+      </p>
+
+    </blockquote>
+  </div>
+</body>
+
+</html>
