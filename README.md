@@ -171,6 +171,12 @@ The method can optionally take the arguments if needed.
 </html>
 ```
 
+## Development
+
+When running the specs locally in the project use this:
+
+`crystal run spec/*.cr -- -l "./projects/spinach/spec"`
+
 ## Contributing
 
 1. Fork it (<https://github.com/sushichain/spinach/fork>)
