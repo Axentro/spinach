@@ -11,13 +11,13 @@
     <br/>
     <blockquote>
       <p>Success case</p>
-      <p>
+      <p spinach:scenario="#scenario1">
         If my username is <b spinach:set="#username">Chuck Norris</b>.<br/>
         Then the system should greet me with <b spinach:assert_equals="greeting_for(#username)">Hello Chuck Norris, you nancy-boy</b>.
       </p>
 
       <p>Failure case</p>
-      <p>
+      <p spinach:scenario="#scenario2">
         If my username is <b spinach:set="#username">Chuck Norris</b>.<br/>
         Then the system should greet me with <b spinach:assert_equals="greeting_for(#username)">Hello Bruce Lee, you superstar</b>.
       </p>

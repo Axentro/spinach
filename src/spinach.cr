@@ -2,6 +2,7 @@ require "option_parser"
 require "myhtml"
 require "file_utils"
 require "colorize"
+require "./commands"
 
 location : String = "spec"
 
@@ -17,48 +18,6 @@ enum AssertKind
   VARIABLE
 end
 
-class AssertEqualsCommand
-  getter method : String
-  getter args : Array(String)
-  getter value : String
-
-  def initialize(@method : String, @value : String, @args : Array(String) = [] of String)
-  end
-
-  def has_args?
-    args.size > 0
-  end
-end
-
-class AssertEqualsVariableCommand
-  getter variable_name : String
-  getter value : String
-
-  def initialize(@variable_name : String, @value : String)
-  end
-end
-
-class SetVariableCommand
-  getter name : String
-  getter value : String
-
-  def initialize(@name : String, @value : String)
-  end
-end
-
-class ExecuteCommand
-  getter method : String
-  getter args : Array(String)
-  getter variable_name : String
-
-  def initialize(@method : String, @variable_name : String, @args : Array(String) = [] of String)
-  end
-
-  def has_args?
-    args.size > 0
-  end
-end
-
 class ReportData
   getter expected : String
   getter actual : String | Hash(String, String)
@@ -66,6 +25,15 @@ class ReportData
 
   def initialize(@expected : String, @actual : String | Hash(String, String), @passed : Bool)
   end
+end
+
+alias Command = AssertEqualsCommand | AssertEqualsVariableCommand | SetVariableCommand | ExecuteCommand
+
+class Scenario
+  getter name : String
+  getter commands : Array(Command)
+
+  def initialize(@name : String, @commands : Array(Command)); end
 end
 
 alias VariableValue = Hash(String, String)
@@ -97,26 +65,41 @@ abstract class SpinachTestCase
     @variables
   end
 
+  def clear_variables
+    @variables = {} of String => VariableValue
+  end
+
   def empty_mapping
     {"none": ->(args : Array(String)) { "" }}
   end
 
   def run(node_type, template_path)
-    name = node_type.to_s.underscore
-    template = "#{__DIR__}/../../../#{template_path}/#{name}.html"
+    filename = node_type.to_s.underscore
+    template = "#{__DIR__}/../../../#{template_path}/#{filename}.html"
     parser = Myhtml::Parser.new(File.read(template))
-    commands = locate_commands(parser)
-    execute_commands(commands, node_type, name, parser, template_path)
+    execute_scenarios(node_type, filename, parser, template_path)
   end
 
-  def locate_commands(parser)
-    locate_set_variable_commands(parser) +
-      locate_execute_commands(parser) +
-      locate_assert_equals_commands(parser)
+  def execute_scenarios(node_type, filename, parser, template_path)
+    results = parser.root!.scope.select { |n| n.attributes.keys.includes?("spinach:scenario") }.flat_map do |node|
+      scenario_name = node.attributes["spinach:scenario"]
+      commands = locate_commands(node)
+      execute_commands(commands, node_type, parser, filename, scenario_name, template_path)
+    end.to_a
+
+    generate_cli_reports(results, filename)
+    generate_html_reports(results, filename, parser, template_path)
+    {results: results, filename: filename}
   end
 
-  private def locate_assert_equals_commands(parser)
-    parser.root!.scope.select { |n| n.attributes.keys.includes?("spinach:assert_equals") }.map do |node|
+  def locate_commands(node)
+    locate_set_variable_commands(node) +
+      locate_execute_commands(node) +
+      locate_assert_equals_commands(node)
+  end
+
+  private def locate_assert_equals_commands(node)
+    node.scope.select { |n| n.attributes.keys.includes?("spinach:assert_equals") }.map do |node|
       other_attrs = node.attributes.keys.reject { |attr| attr.starts_with?("spinach") }
       raise "Error: the node for spinach:assert_equals must not contain any non spinach attributes - please remove these: #{other_attrs}" if other_attrs.size > 0
 
@@ -140,15 +123,15 @@ abstract class SpinachTestCase
     end
   end
 
-  private def locate_set_variable_commands(parser)
-    parser.root!.scope.select { |n| n.attributes.keys.includes?("spinach:set") }.map do |node|
+  private def locate_set_variable_commands(node)
+    node.scope.select { |n| n.attributes.keys.includes?("spinach:set") }.map do |node|
       variable_name = node.attributes["spinach:set"]
       SetVariableCommand.new(variable_name, node.inner_text)
     end.to_a
   end
 
-  private def locate_execute_commands(parser)
-    parser.root!.scope.select { |n| n.attributes.keys.includes?("spinach:execute") }.map do |node|
+  private def locate_execute_commands(node)
+    node.scope.select { |n| n.attributes.keys.includes?("spinach:execute") }.map do |node|
       res = process_execute_command(node.attributes["spinach:execute"])
       ExecuteCommand.new(res[:method], res[:variable_name], res[:args])
     end.to_a
@@ -178,7 +161,7 @@ abstract class SpinachTestCase
     {variable_name: data.first, method: data.last}
   end
 
-  def execute_commands(commands, node_type, name, parser, template_path)
+  def execute_commands(commands, node_type, parser, filename, scenario_name, template_path)
     report_data = [] of ReportData
     klass = node_type.new
     commands.each do |command|
@@ -212,22 +195,23 @@ abstract class SpinachTestCase
         report_data << ReportData.new(expected, actual, result)
       end
     end
-    generate_cli_reports(report_data, name)
-    generate_html_reports(report_data, name, parser, template_path)
-    {report_data: report_data, name: name}
+    # generate_cli_reports(report_data, name)
+    # generate_html_reports(report_data, name, parser, template_path)
+    {report_data: report_data, scenario_name: scenario_name, filename: filename}
   end
 
-
-  def generate_cli_reports(report_data, name)
-    report_data.each do |r|
+  def generate_cli_reports(results, name)
+    results.flat_map { |res| res[:report_data] }.each do |r|
       print (r.passed ? ".".colorize(:green) : "F".colorize(:red))
     end
   end
 
-  def generate_html_reports(report_data, name, parser, template_path)
+  def generate_html_reports(results, filename, parser, template_path)
     report_path = "#{__DIR__}/../../../#{template_path}/reports"
     FileUtils.mkdir_p(report_path) unless File.exists?(report_path)
-    target_out = "#{report_path}/#{name}.report.html"
+    target_out = "#{report_path}/#{filename}.report.html"
+
+    report_data = results.flat_map { |res| res[:report_data] }.to_a
 
     assert_equals_count = 0
     parser.root!.scope.each do |node|
@@ -262,27 +246,29 @@ def all_test_cases
   {% end %}
 end
 
-def test_summary(results)
- results.each do |res|
-   has_failures = res[:report_data].map(&.passed).uniq.includes?(false)
-   if has_failures
-     puts ""
-     puts ""
-     puts "#{res[:name]}.cr".colorize(:magenta)
-     res[:report_data].reject(&.passed).each do |data|
-       puts "expected: #{data.expected}".colorize(:red)
-       puts "  actual: #{data.actual}".colorize(:red)
-     end
-   end
- end
- num_passed = results.flat_map{|r| r[:report_data]}.select{|r| r.passed }.size
- num_failed = results.flat_map{|r| r[:report_data]}.select{|r| !r.passed }.size
- summary = "Passed: #{num_passed}, Failed: #{num_failed}, Total: #{num_passed + num_failed}"
- puts ""
- puts ""
- puts (num_failed > 0 ? summary.colorize(:red) : summary.colorize(:green))
- puts ""
- exit num_failed
+def test_summary(data)
+  results = data.flat_map { |d| d[:results] }
+  results.each do |res|
+    has_failures = res[:report_data].reject(&.passed).size > 0
+    if has_failures
+      filename = res[:filename]
+      puts ""
+      puts ""
+      puts "#{filename}.cr".colorize(:magenta).to_s + " : " + "#{res[:scenario_name]}".colorize(:blue).to_s
+      res[:report_data].reject(&.passed).each do |data|
+        puts "expected: #{data.expected}".colorize(:red)
+        puts "  actual: #{data.actual}".colorize(:red)
+      end
+    end
+  end
+  num_passed = results.flat_map { |r| r[:report_data] }.select { |r| r.passed }.size
+  num_failed = results.flat_map { |r| r[:report_data] }.select { |r| !r.passed }.size
+  summary = "Passed: #{num_passed}, Failed: #{num_failed}, Total: #{num_passed + num_failed}"
+  puts ""
+  puts ""
+  puts (num_failed > 0 ? summary.colorize(:red) : summary.colorize(:green))
+  puts ""
+  exit num_failed
 end
 
 results = all_test_cases.map do |test|
