@@ -22,8 +22,9 @@ class ReportData
   getter expected : String
   getter actual : String | Hash(String, String)
   getter passed : Bool
+  getter implementation_status : String
 
-  def initialize(@expected : String, @actual : String | Hash(String, String), @passed : Bool)
+  def initialize(@expected : String, @actual : String | Hash(String, String), @passed : Bool, @implementation_status : String)
   end
 end
 
@@ -83,11 +84,12 @@ abstract class SpinachTestCase
   def execute_scenarios(node_type, filename, parser, template_path)
     results = parser.root!.scope.select { |n| n.attributes.keys.includes?("spinach:scenario") }.flat_map do |node|
       scenario_name = node.attributes["spinach:scenario"]
+      implementation_status = node.attributes["spinach:status"]? || "expected_to_pass"
       commands = locate_commands(node)
-      execute_commands(commands, node_type, parser, filename, scenario_name, template_path)
+      execute_commands(commands, node_type, parser, filename, scenario_name, implementation_status, template_path)
     end.to_a
 
-    generate_cli_reports(results, filename)
+    generate_cli_reports(results)
     generate_html_reports(results, filename, parser, template_path)
     {results: results, filename: filename}
   end
@@ -103,14 +105,15 @@ abstract class SpinachTestCase
       other_attrs = node.attributes.keys.reject { |attr| attr.starts_with?("spinach") }
       raise "Error: the node for spinach:assert_equals must not contain any non spinach attributes - please remove these: #{other_attrs}" if other_attrs.size > 0
 
+      implementation_status = node.attributes["spinach:status"]?
       value = node.attributes["spinach:assert_equals"]
       kind = kind_of_assert(value)
       case kind
       when AssertKind::METHOD
         res = process_command(value)
-        AssertEqualsCommand.new(res[:method], node.inner_text, res[:args])
+        AssertEqualsCommand.new(res[:method], node.inner_text, implementation_status, res[:args])
       else
-        AssertEqualsVariableCommand.new(value, node.inner_text)
+        AssertEqualsVariableCommand.new(value, node.inner_text, implementation_status)
       end
     end.to_a
   end
@@ -161,7 +164,7 @@ abstract class SpinachTestCase
     {variable_name: data.first, method: data.last}
   end
 
-  def execute_commands(commands, node_type, parser, filename, scenario_name, template_path)
+  def execute_commands(commands, node_type, parser, filename, scenario_name, implementation_status, template_path)
     report_data = [] of ReportData
     klass = node_type.new
     commands.each do |command|
@@ -170,39 +173,63 @@ abstract class SpinachTestCase
         klass.set_variable(command.name, command.value)
       when AssertEqualsVariableCommand
         expected = command.value
+        implementation_status = command.implementation_status || implementation_status
 
         if is_execution_variable?(command.variable_name)
-          data = execution_data(command.variable_name)
-          result_map = klass.get_variable(data[:variable_name])
-          actual = result_map[data[:method]]
-          result = actual == expected
-          report_data << ReportData.new(expected, actual, result)
+          if implementation_status == "pending" || implementation_status == "ignored"
+            report_data << ReportData.new(expected, "", true, implementation_status)
+          else
+            data = execution_data(command.variable_name)
+            result_map = klass.get_variable(data[:variable_name])
+            actual = result_map[data[:method]]
+            result = actual == expected
+            report_data << ReportData.new(expected, actual, result, implementation_status)
+          end
         else
-          actual = klass.get_string_variable(command.variable_name)
-          result = actual == expected
-          report_data << ReportData.new(expected, actual, result)
+          if implementation_status == "pending" || implementation_status == "ignored"
+            report_data << ReportData.new(expected, "", true, implementation_status)
+          else
+            actual = klass.get_string_variable(command.variable_name)
+            result = actual == expected
+            report_data << ReportData.new(expected, actual, result, implementation_status)
+          end
         end
       when ExecuteCommand
         args = command.args.map { |arg| klass.get_string_variable(arg) }
         result_map = klass.mapping[command.method].call(args)
         klass.set_variable(command.variable_name, result_map)
       when AssertEqualsCommand
-        args = command.args.map { |arg| klass.get_string_variable(arg) }
-
-        actual = klass.mapping[command.method].call(args)
         expected = command.value
-        result = actual == expected
-        report_data << ReportData.new(expected, actual, result)
+        implementation_status = command.implementation_status || implementation_status
+        if implementation_status == "pending" || implementation_status == "ignored"
+          report_data << ReportData.new(expected, "", true, implementation_status)
+        else
+          args = command.args.map { |arg| klass.get_string_variable(arg) }
+          actual = klass.mapping[command.method].call(args)
+          result = actual == expected
+          report_data << ReportData.new(expected, actual, result, implementation_status)
+        end
       end
     end
-    # generate_cli_reports(report_data, name)
-    # generate_html_reports(report_data, name, parser, template_path)
     {report_data: report_data, scenario_name: scenario_name, filename: filename}
   end
 
-  def generate_cli_reports(results, name)
+  def generate_cli_reports(results)
     results.flat_map { |res| res[:report_data] }.each do |r|
-      print (r.passed ? ".".colorize(:green) : "F".colorize(:red))
+      output = if r.implementation_status == "pending"
+                 "P".colorize(:blue)
+               elsif r.implementation_status == "ignored"
+                 "I".colorize(:yellow)
+               elsif r.passed
+                 ".".colorize(:green)
+               else
+                 if r.implementation_status == "expected_to_fail"
+                   "F".colorize(:green)
+                 else
+                   "F".colorize(:red)
+                 end
+               end
+      print output
     end
   end
 
@@ -211,33 +238,58 @@ abstract class SpinachTestCase
     FileUtils.mkdir_p(report_path) unless File.exists?(report_path)
     target_out = "#{report_path}/#{filename}.report.html"
 
-    report_data = results.flat_map { |res| res[:report_data] }.to_a
+    results.each do |result_set|
+      parser.root!.scope.each do |node|
+        if node.attributes.keys.includes?("spinach:scenario") && node.attributes["spinach:scenario"] == result_set[:scenario_name]
+          report_data = result_set[:report_data]
 
-    assert_equals_count = 0
-    parser.root!.scope.each do |node|
-      if node.attributes.keys.includes?("spinach:assert_equals")
-        result = report_data[assert_equals_count]
+          assert_equals_count = 0
+          node.scope.each do |scenario_node|
+            if scenario_node.attributes.keys.includes?("spinach:assert_equals")
+              result = report_data[assert_equals_count]
 
-        if result.passed
-          node.attribute_add("class", "text-success bg-light p-1")
-        else
-          node.attribute_add("class", "text-danger bg-light p-1")
+              if result.implementation_status == "pending"
+                badge = create_badge(parser, result.implementation_status, "info")
+                scenario_node.append_child(badge)
+              elsif result.implementation_status == "ignored"
+                badge = create_badge(parser, result.implementation_status, "secondary")
+                scenario_node.append_child(badge)
+              else
+                if result.passed
+                  scenario_node.attribute_add("class", "text-success bg-light p-1")
+                else
+                  scenario_node.attribute_add("class", "text-danger bg-light p-1")
 
-          failure = parser.tree.create_node(:span)
-          failure.attribute_add("class", "text-muted bg-light p-1")
-          failure.inner_text = " | #{result.actual}"
-          node.append_child(failure)
+                  failure = parser.tree.create_node(:span)
+                  failure.attribute_add("class", "text-muted bg-light p-1")
+                  failure.inner_text = " | #{result.actual}"
+                  scenario_node.append_child(failure)
+
+                  if result.implementation_status == "expected_to_fail"
+                    badge = create_badge(parser, result.implementation_status, "success")
+                    scenario_node.append_child(badge)
+                  end
+                end
+              end
+
+              assert_equals_count += 1
+            end
+          end
         end
-
-        assert_equals_count += 1
       end
-      node
+      File.open(target_out, "w") { |f|
+        f.puts parser.to_html
+      }
     end
-
-    File.open(target_out, "w") { |f|
-      f.puts parser.to_html
-    }
   end
+
+  private def create_badge(parser, text, kind)
+    badge = parser.tree.create_node(:span)
+    badge.attribute_add("class", "badge badge-#{kind} ml-1 p-1")
+    badge.inner_text = text
+    badge
+  end
+
 end
 
 def all_test_cases
@@ -249,7 +301,7 @@ end
 def test_summary(data)
   results = data.flat_map { |d| d[:results] }
   results.each do |res|
-    has_failures = res[:report_data].reject(&.passed).size > 0
+    has_failures = res[:report_data].reject(&.passed).reject{|r| r.implementation_status == "expected_to_fail"}.size > 0
     if has_failures
       filename = res[:filename]
       puts ""
@@ -261,9 +313,13 @@ def test_summary(data)
       end
     end
   end
-  num_passed = results.flat_map { |r| r[:report_data] }.select { |r| r.passed }.size
-  num_failed = results.flat_map { |r| r[:report_data] }.select { |r| !r.passed }.size
-  summary = "Passed: #{num_passed}, Failed: #{num_failed}, Total: #{num_passed + num_failed}"
+  num_passed = results.flat_map { |r| r[:report_data] }.select { |r| r.passed && r.implementation_status != "ignored" && r.implementation_status != "pending"}.size
+  num_ignored = results.flat_map { |r| r[:report_data] }.select { |r| r.implementation_status == "ignored"}.size
+  num_pending = results.flat_map { |r| r[:report_data] }.select { |r| r.implementation_status == "pending"}.size
+  num_failed = results.flat_map { |r| r[:report_data] }.select { |r| !r.passed && r.implementation_status != "expected_to_fail"}.size
+  num_expected_failed = results.flat_map { |r| r[:report_data] }.select { |r| !r.passed && r.implementation_status == "expected_to_fail"}.size
+  total = num_passed + num_ignored + num_pending + num_failed + num_expected_failed
+  summary = "Passed: #{num_passed + num_expected_failed}, Failed: #{num_failed}, Ignored: #{num_ignored}, Pending: #{num_pending}, Total: #{total}"
   puts ""
   puts ""
   puts (num_failed > 0 ? summary.colorize(:red) : summary.colorize(:green))

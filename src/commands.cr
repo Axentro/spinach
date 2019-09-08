@@ -2,8 +2,9 @@ class AssertEqualsCommand
   getter method : String
   getter args : Array(String)
   getter value : String
+  getter implementation_status : String?
 
-  def initialize(@method : String, @value : String, @args : Array(String) = [] of String)
+  def initialize(@method : String, @value : String, @implementation_status : String?, @args : Array(String) = [] of String)
   end
 
   def has_args?
@@ -14,8 +15,9 @@ end
 class AssertEqualsVariableCommand
   getter variable_name : String
   getter value : String
+  getter implementation_status : String?
 
-  def initialize(@variable_name : String, @value : String)
+  def initialize(@variable_name : String, @value : String, @implementation_status : String?)
   end
 end
 

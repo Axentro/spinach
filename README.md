@@ -36,14 +36,14 @@ In your HTML you use these to write the specs. See below. See also the specs of 
 ### Scenario
 
 ```html
-<p spinach:scenario="#scenario1">
+<div spinach:scenario="#scenario1">
   If my name is <b spinach:set="#username">Chuck Norris</b>.<br/>
   Then my username should be <b spinach:assert_equals="#username">Chuck Norris2</b>.
-</p>
+</div>
 ```
 
 Each spec file must contain at least one scenario. A scenario is used to provide scope for the commands. When a spec runs
-the variables used in the scenario are scoped to that specific scenario. So a scenario should be placed on an HTML element that
+the variables used in the scenario are scoped to that specific scenario. So a scenario **MUST** be placed on a `Div` HTML element that
 is a parent and then all the spec commands should go on HTML nodes that are children of this parent node. See the specs folder for
 examples
 

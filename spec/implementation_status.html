@@ -1,0 +1,69 @@
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/spacelab/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <h3>Implementation Status</h3>
+    <br/>
+    <p>
+      <h5>These are examples specifying the implementation status for a <i>scenario</i> using <b>status</b>.</h5>
+    </p>
+    <div class="container">
+
+      <div spinach:scenario="#scenario 1">
+        <blockquote>
+          (expected_to_pass) The failed greeting should be <b spinach:assert_equals="get_greeting()">Hello World!</b>.
+        </blockquote>
+      </div>
+
+      <div spinach:scenario="#scenario 2" spinach:status="expected_to_fail">
+        <blockquote>
+          (expected_to_fail) The failed greeting should be <b spinach:assert_equals="failed_greeting()">Hello World!</b>.
+        </blockquote>
+      </div>
+
+      <div spinach:scenario="#scenario 3" spinach:status="pending">
+        <blockquote>
+          (pending) The failed greeting should be <b spinach:assert_equals="failed_greeting()">Hello World!</b>.
+        </blockquote>
+      </div>
+
+      <div spinach:scenario="#scenario 4" spinach:status="ignored">
+        <blockquote>
+          (ignored) The failed greeting should be <b spinach:assert_equals="failed_greeting()">Hello World!</b>.
+        </blockquote>
+      </div>
+    </div>
+    <br/>
+    <hr/>
+    <br/>
+  <p>
+  <h5>These are examples specifying implementation status on specific assertions within a scenario using <b>status</b>.</h5>
+</p>
+<div class="container" spinach:scenario="#scenario4">
+
+  <blockquote>
+    (expected_to_pass) The failed greeting should be <b spinach:assert_equals="get_greeting()" spinach:status="expected_to_fail">Hello World!</b>.
+  </blockquote>
+
+  <blockquote>
+    (expected_to_fail) The failed greeting should be <b spinach:assert_equals="failed_greeting()" spinach:status="expected_to_fail">Hello World!</b>.
+  </blockquote>
+
+  <blockquote>
+    (ignored) The failed greeting should be <b spinach:assert_equals="failed_greeting()" spinach:status="ignored">Hello World!</b>.
+  </blockquote>
+
+  <blockquote>
+    (pending) The greeting should be <b spinach:assert_equals="get_greeting()" spinach:status="pending">Hello World!</b>.
+  </blockquote>
+
+</div>
+
+  </div>
+</body>
+
+</html>
