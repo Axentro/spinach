@@ -235,7 +235,7 @@ abstract class SpinachTestCase
     end
 
     File.open(target_out, "w") { |f|
-      f.puts parser.to_pretty_html
+      f.puts parser.to_html
     }
   end
 end
