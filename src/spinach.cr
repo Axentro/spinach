@@ -79,6 +79,7 @@ abstract class SpinachTestCase
     filename = node_type.to_s.underscore
     template = "#{__DIR__}/../../../#{template_path}/#{filename}.html"
     parser = Myhtml::Parser.new(File.read(template))
+    # execute_table_scenarios(node_type, filename, parser, template_path)
     execute_scenarios(node_type, filename, parser, template_path)
   end
 
