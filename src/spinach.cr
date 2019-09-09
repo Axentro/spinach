@@ -96,7 +96,6 @@ abstract class SpinachTestCase
   end
 
   def locate_commands(node)
-    locate_link_runner_commands(node) +
     locate_set_variable_commands(node) +
       locate_execute_commands(node) +
       locate_assert_equals_commands(node)
@@ -255,6 +254,7 @@ abstract class SpinachTestCase
 
           assert_equals_count = 0
           node.scope.each do |scenario_node|
+             classes = scenario_node.tag_name == "td" ? "" : "bg-light p-1"
             if scenario_node.attributes.keys.includes?("spinach:assert_equals")
               result = report_data[assert_equals_count]
 
@@ -266,16 +266,16 @@ abstract class SpinachTestCase
                 scenario_node.append_child(badge)
               else
                 if result.passed
-                  scenario_node.attribute_add("class", "text-success bg-light p-1")
+                  scenario_node.attribute_add("class", "text-success #{classes}" )
                   if result.implementation_status == "expected_to_fail"
                     badge = create_badge(parser, result.implementation_status, "danger")
                     scenario_node.append_child(badge)
                   end
                 else
-                  scenario_node.attribute_add("class", "text-danger bg-light p-1")
+                  scenario_node.attribute_add("class", "text-danger #{classes}")
 
                   failure = parser.tree.create_node(:span)
-                  failure.attribute_add("class", "text-muted bg-light p-1")
+                  failure.attribute_add("class", "text-muted #{classes}")
                   failure.inner_text = " | #{result.actual}"
                   scenario_node.append_child(failure)
 

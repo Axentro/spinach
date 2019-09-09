@@ -1,0 +1,46 @@
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/spacelab/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Tables</h1>
+    <h4>This is an example of executing repeating scenarios in a <b>table</b>.</h4>
+    <br/>
+    <table spinach:table_scenario="scenario 1" class="table table-striped">
+      <thead class="thead-dark">
+        <tr spinach:execute="greeting = greeting_for(firstname, lastname)">
+          <th spinach:set="firstname">First name</th>
+          <th spinach:set="lastname">Last name</th>
+          <th spinach:assert_equals="greeting.login_greeting">Greeting</th>
+          <th spinach:assert_equals="greeting.login_message">Message</th>
+        </tr>
+        </thead/>
+        <tbody>
+          <tr>
+            <td>Bob2</td>
+            <td>Bobbington</td>
+            <td>Hello Bob!</td>
+            <td>Your last name is Bobbington!</td>
+          </tr>
+          <tr>
+            <td>Bob2</td>
+            <td>Bobbington</td>
+            <td>Hello Bob!</td>
+            <td>Your last name is Bobbington!</td>
+          </tr>
+          <tr>
+            <td>Bob</td>
+            <td>Bobbington</td>
+            <td>Hello Bob!</td>
+            <td>Your last name is Bobbingtons!</td>
+          </tr>
+        </tbody>
+    </table>
+
+  </div>
+</body>
+
+</html>
