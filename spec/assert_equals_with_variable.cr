@@ -7,7 +7,7 @@ class AssertEqualsWithVariable < SpinachTestCase
   end
 
   def initialize
-   set_variable("#username", "Bob")
+   set_variable("username", "Bob")
   end
 
 end

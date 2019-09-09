@@ -96,6 +96,7 @@ abstract class SpinachTestCase
   end
 
   def locate_commands(node)
+    locate_link_runner_commands(node) +
     locate_set_variable_commands(node) +
       locate_execute_commands(node) +
       locate_assert_equals_commands(node)

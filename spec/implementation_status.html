@@ -13,13 +13,13 @@
     </p>
     <div class="container">
 
-      <div spinach:scenario="#scenario 1">
+      <div spinach:scenario="scenario 1">
         <blockquote>
           (expected_to_pass) The failed greeting should be <b spinach:assert_equals="get_greeting()">Hello World!</b>.
         </blockquote>
       </div>
 
-      <div spinach:scenario="#scenario 2" spinach:status="expected_to_fail">
+      <div spinach:scenario="scenario 2" spinach:status="expected_to_fail">
         <blockquote>
           (expected_to_fail) The failed greeting should be <b spinach:assert_equals="failed_greeting()">Hello World!</b>.
         </blockquote>
@@ -29,13 +29,13 @@
         </blockquote>
       </div>
 
-      <div spinach:scenario="#scenario 3" spinach:status="pending">
+      <div spinach:scenario="scenario 3" spinach:status="pending">
         <blockquote>
           (pending) The failed greeting should be <b spinach:assert_equals="failed_greeting()">Hello World!</b>.
         </blockquote>
       </div>
 
-      <div spinach:scenario="#scenario 4" spinach:status="ignored">
+      <div spinach:scenario="scenario 4" spinach:status="ignored">
         <blockquote>
           (ignored) The failed greeting should be <b spinach:assert_equals="failed_greeting()">Hello World!</b>.
         </blockquote>
@@ -47,7 +47,7 @@
   <p>
   <h5>These are examples specifying implementation status on specific assertions within a scenario using <b>status</b>.</h5>
 </p>
-<div class="container" spinach:scenario="#scenario 5">
+<div class="container" spinach:scenario="scenario 5">
 
   <blockquote>
     (expected_to_fail) The failed greeting should be <b spinach:assert_equals="get_greeting()" spinach:status="expected_to_fail">Hello World!</b>.

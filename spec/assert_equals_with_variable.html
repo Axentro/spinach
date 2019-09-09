@@ -10,17 +10,17 @@
     <h4>This is an example of setting a variable and using <b>assert_equals</b>.</h4>
     <br/>
     <blockquote>
-      <div spinach:scenario="#scenario1">
-        If my name is <b spinach:set="#username">Chuck Norris</b>.<br/>
-        Then my username should be <b spinach:assert_equals="#username">Chuck Norris2</b>.
+      <div spinach:scenario="scenario 1">
+        If my name is <b spinach:set="username">Chuck Norris</b>.<br/>
+        Then my username should be <b spinach:assert_equals="username">Chuck Norris2</b>.
       </div>
     </blockquote>
 
     <blockquote>
-      <div spinach:scenario="#scenario2">
-        If my name is <b spinach:set="#username">Chuck Norris</b>.<br/>
-        Then I update my username to <b spinach:set="#username">Bob</b><br/>
-        Then my username should be <b spinach:assert_equals="#username">Bob</b>.
+      <div spinach:scenario="scenario 2">
+        If my name is <b spinach:set="username">Chuck Norris</b>.<br/>
+        Then I update my username to <b spinach:set="username">Bob</b><br/>
+        Then my username should be <b spinach:assert_equals="username">Bob</b>.
       </div>
     </blockquote>
   </div>
