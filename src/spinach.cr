@@ -23,8 +23,9 @@ class ReportData
   getter actual : String | Hash(String, String)
   getter passed : Bool
   getter implementation_status : String
+  getter trace : Array(String)?
 
-  def initialize(@expected : String, @actual : String | Hash(String, String), @passed : Bool, @implementation_status : String)
+  def initialize(@expected : String, @actual : String | Hash(String, String), @passed : Bool, @implementation_status : String, @trace : Array(String)?)
   end
 end
 
@@ -177,21 +178,21 @@ abstract class SpinachTestCase
 
         if is_execution_variable?(command.variable_name)
           if status == "pending" || status == "ignored"
-            report_data << ReportData.new(expected, "", true, status)
+            report_data << ReportData.new(expected, "", true, status, nil)
           else
             data = execution_data(command.variable_name)
             result_map = klass.get_variable(data[:variable_name])
             actual = result_map[data[:method]]
             result = actual == expected
-            report_data << ReportData.new(expected, actual, result, status)
+            report_data << ReportData.new(expected, actual, result, status, nil)
           end
         else
           if status == "pending" || status == "ignored"
-            report_data << ReportData.new(expected, "", true, status)
+            report_data << ReportData.new(expected, "", true, status, nil)
           else
             actual = klass.get_string_variable(command.variable_name)
             result = actual == expected
-            report_data << ReportData.new(expected, actual, result, status)
+            report_data << ReportData.new(expected, actual, result, status, nil)
           end
         end
       when ExecuteCommand
@@ -202,12 +203,16 @@ abstract class SpinachTestCase
         expected = command.value
         status = command.implementation_status || implementation_status
         if status == "pending" || status == "ignored"
-          report_data << ReportData.new(expected, "", true, status)
+          report_data << ReportData.new(expected, "", true, status, nil)
         else
-          args = command.args.map { |arg| klass.get_string_variable(arg) }
-          actual = klass.mapping[command.method].call(args)
-          result = actual == expected
-          report_data << ReportData.new(expected, actual, result, status)
+          begin
+            args = command.args.map { |arg| klass.get_string_variable(arg) }
+            actual = klass.mapping[command.method].call(args)
+            result = actual == expected
+            report_data << ReportData.new(expected, actual, result, status, nil)
+          rescue e : Exception
+            report_data << ReportData.new(expected, e.to_s, false, status, e.backtrace?)
+          end
         end
       end
     end
@@ -277,6 +282,11 @@ abstract class SpinachTestCase
                     badge = create_badge(parser, result.implementation_status, "success")
                     scenario_node.append_child(badge)
                   end
+
+                  if trace = result.trace
+                    alert = create_alert(parser, trace.join("\n"))
+                    scenario_node.append_child(alert)
+                  end
                 end
               end
 
@@ -297,6 +307,14 @@ abstract class SpinachTestCase
     badge.inner_text = text
     badge
   end
+
+  private def create_alert(parser, text)
+    alert = parser.tree.create_node(:div)
+    alert.attribute_add("class", "alert alert-danger mt-2")
+    alert.attribute_add("role", "alert")
+    alert.inner_text = text
+    alert
+  end
 end
 
 def all_test_cases
@@ -315,22 +333,21 @@ def test_summary(data)
       puts ""
       puts ""
       puts "#{filename}.cr".colorize(:magenta).to_s + " : " + "#{res[:scenario_name]}".colorize(:blue).to_s
-      res[:report_data].reject{|r| (r.passed && r.implementation_status == "expected_to_pass") ||
-                                    r.implementation_status == "pending" ||
-                                    r.implementation_status == "ignored" ||
-                                    !r.passed && r.implementation_status == "expected_to_fail"
-                                    }.each do |data|
+      res[:report_data].reject { |r| (r.passed && r.implementation_status == "expected_to_pass") ||
+        r.implementation_status == "pending" ||
+        r.implementation_status == "ignored" ||
+        !r.passed && r.implementation_status == "expected_to_fail" }.each do |data|
         puts "expected: #{data.expected}".colorize(:red)
         puts "  actual: #{data.actual}".colorize(:red)
       end
     end
   end
-  num_passed = results.flat_map { |r| r[:report_data] }.select { |r| r.passed && r.implementation_status == "expected_to_pass"}.size
+  num_passed = results.flat_map { |r| r[:report_data] }.select { |r| r.passed && r.implementation_status == "expected_to_pass" }.size
   num_ignored = results.flat_map { |r| r[:report_data] }.select { |r| r.implementation_status == "ignored" }.size
   num_pending = results.flat_map { |r| r[:report_data] }.select { |r| r.implementation_status == "pending" }.size
   num_failed = results.flat_map { |r| r[:report_data] }.select { |r| !r.passed && r.implementation_status != "expected_to_fail" }.size
   num_expected_failed = results.flat_map { |r| r[:report_data] }.select { |r| !r.passed && r.implementation_status == "expected_to_fail" }.size
-  num_passed_incorrectly = results.flat_map { |r| r[:report_data] }.select { |r| r.passed && r.implementation_status == "expected_to_fail"}.size
+  num_passed_incorrectly = results.flat_map { |r| r[:report_data] }.select { |r| r.passed && r.implementation_status == "expected_to_fail" }.size
   total_failed = num_failed + num_passed_incorrectly
   total = num_passed + num_ignored + num_pending + num_failed + num_expected_failed + num_passed_incorrectly
   summary = "Passed: #{num_passed + num_expected_failed}, Failed: #{total_failed}, Ignored: #{num_ignored}, Pending: #{num_pending}, Total: #{total}"
