@@ -30,6 +30,7 @@ There are 3 directives:
 * assert_equals
 * set
 * execute
+* status
 
 In your HTML you use these to write the specs. See below. See also the specs of this project for examples.
 
@@ -102,6 +103,21 @@ When returning a result in an execute you **MUST** return a `HashMap`
 
 ![](.README/execute_function.png)
 
+### Implementation Status
+
+```html
+<div spinach:scenario="#scenario 2" spinach:status="expected_to_fail">
+  <blockquote>
+    (expected_to_fail) The failed greeting should be <b spinach:assert_equals="failed_greeting()">Hello World!</b>.
+  </blockquote>
+</div>
+
+```
+
+You can add the `status` directive to either the node with `spinach:scenario` to apply it to the whole scenario or you can add it to a specific assert_equals node.
+
+![](.README/implementation_status.png)
+
 ## Running
 
 To run a spec you can do the following:
@@ -116,6 +132,11 @@ There is a basic command line report:
 
 ![](.README/cli.png)
 
+* a green dot is passed
+* a red F is failed
+* a green F is failed but expected to fail
+* a yellow I is ignored
+* a blue P is pending
 
 ## Writing Specs
 
