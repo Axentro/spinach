@@ -11,11 +11,12 @@
     <br/>
     <table spinach:table_scenario="scenario 1" class="table table-striped">
       <thead class="thead-dark">
-        <tr spinach:execute="greeting = greeting_for(firstname, lastname)">
+        <tr>
           <th spinach:set="firstname">First name</th>
           <th spinach:set="lastname">Last name</th>
           <th spinach:assert_equals="greeting.login_greeting">Greeting</th>
           <th spinach:assert_equals="greeting.login_message">Message</th>
+          <th spinach:execute="greeting = greeting_for(firstname, lastname)"></th>
         </tr>
         </thead/>
         <tbody>
@@ -24,18 +25,95 @@
             <td>Bobbington</td>
             <td>Hello Bob!</td>
             <td>Your last name is Bobbington!</td>
+            <td></td>
           </tr>
           <tr>
             <td>Bob2</td>
             <td>Bobbington</td>
             <td>Hello Bob!</td>
             <td>Your last name is Bobbington!</td>
+            <td></td>
           </tr>
           <tr>
             <td>Bob</td>
             <td>Bobbington</td>
             <td>Hello Bob!</td>
             <td>Your last name is Bobbingtons!</td>
+            <td></td>
+          </tr>
+        </tbody>
+    </table>
+
+    <h4>Another example</h4>
+    <br/>
+    <table spinach:table_scenario="scenario 2" class="table table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th spinach:set="firstname">First name</th>
+          <th spinach:set="lastname">Last name</th>
+          <th spinach:assert_equals="greeting.login_greeting">Greeting</th>
+          <th spinach:assert_equals="greeting.login_message">Message</th>
+          <th spinach:execute="greeting = greeting_for(firstname, lastname)"></th>
+        </tr>
+        </thead/>
+        <tbody>
+          <tr>
+            <td>Bob2</td>
+            <td>Bobbington</td>
+            <td>Hello Bob!</td>
+            <td>Your last name is Bobbington!</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Bob2</td>
+            <td>Bobbington</td>
+            <td>Hello Bob!</td>
+            <td>Your last name is Bobbington!</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Bob</td>
+            <td>Bobbington</td>
+            <td>Hello Bob!</td>
+            <td>Your last name is Bobbingtons!</td>
+            <td></td>
+          </tr>
+        </tbody>
+    </table>
+
+    <h4>Another example</h4>
+    <br/>
+    <table spinach:table_scenario="scenario 2" class="table table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th spinach:set="firstname">First name</th>
+          <th spinach:set="lastname">Last name</th>
+          <th spinach:assert_equals="greeting.login_greeting">Greeting</th>
+          <th spinach:assert_equals="greeting.login_message">Message</th>
+          <th spinach:execute="greeting = greeting_for(firstname, lastname)"></th>
+        </tr>
+        </thead/>
+        <tbody>
+          <tr>
+            <td>Bob2</td>
+            <td>Bobbington</td>
+            <td>Hello Bob2!</td>
+            <td>Your last name is Bobbington!</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Bob2</td>
+            <td>Bobbington</td>
+            <td>Hello Bob2!</td>
+            <td>Your last name is Bobbington!</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>Bob</td>
+            <td>Bobbington</td>
+            <td>Hello Bob!</td>
+            <td>Your last name is Bobbington!</td>
+            <td></td>
           </tr>
         </tbody>
     </table>

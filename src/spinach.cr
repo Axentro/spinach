@@ -79,8 +79,30 @@ abstract class SpinachTestCase
     filename = node_type.to_s.underscore
     template = "#{__DIR__}/../../../#{template_path}/#{filename}.html"
     parser = Myhtml::Parser.new(File.read(template))
-    # execute_table_scenarios(node_type, filename, parser, template_path)
+    parser = prepare_table_scenarios(parser)
     execute_scenarios(node_type, filename, parser, template_path)
+  end
+
+  def prepare_table_scenarios(parser)
+    parser.root!.scope.select { |n| n.attributes.keys.includes?("spinach:table_scenario") }.each_with_index do |node, index|
+      node.attribute_remove("spinach:table_scenario")
+
+      command_map = {} of String => Hash(String, String)
+      node.scope.select { |n| n.tag_name == "th" }.each_with_index do |th, x|
+        th.attributes.select { |k, v| k.starts_with?("spinach") }.each { |k, v| th.attribute_remove(k); command_map["#{index}_td_#{x}"] = {k => v} }
+      end
+
+      node.scope.select { |n| n.tag_name == "tr" }.to_a[1..-1].each_with_index do |tr, i|
+        tr.attribute_add("spinach:scenario", "table scenario #{index}-#{i}")
+        tr.scope.select { |n| n.tag_name == "td" }.each_with_index do |td, x|
+          if kv = command_map["#{index}_td_#{x}"]?
+            td.attribute_add(kv.first_key, kv.first_value)
+          end
+        end
+      end
+    end
+
+    parser
   end
 
   def execute_scenarios(node_type, filename, parser, template_path)
@@ -255,7 +277,7 @@ abstract class SpinachTestCase
 
           assert_equals_count = 0
           node.scope.each do |scenario_node|
-             classes = scenario_node.tag_name == "td" ? "" : "bg-light p-1"
+            classes = scenario_node.tag_name == "td" ? "" : "bg-light p-1"
             if scenario_node.attributes.keys.includes?("spinach:assert_equals")
               result = report_data[assert_equals_count]
 
@@ -267,7 +289,7 @@ abstract class SpinachTestCase
                 scenario_node.append_child(badge)
               else
                 if result.passed
-                  scenario_node.attribute_add("class", "text-success #{classes}" )
+                  scenario_node.attribute_add("class", "text-success #{classes}")
                   if result.implementation_status == "expected_to_fail"
                     badge = create_badge(parser, result.implementation_status, "danger")
                     scenario_node.append_child(badge)
