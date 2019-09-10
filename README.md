@@ -27,6 +27,7 @@ You put your html file and supporting crystal file in the `spec` folder.
 There are 3 directives:
 
 * scenario
+* table_scenario
 * assert_equals
 * set
 * execute
@@ -34,7 +35,16 @@ There are 3 directives:
 
 In your HTML you use these to write the specs. See below. See also the specs of this project for examples.
 
-### Scenario
+For each scenario the directives are located and then executed. The order in which directives are located is as follows:
+
+1. table_scenario
+2. scenario
+3. set
+4. execute
+5. assert_equals
+6. status
+
+## Scenario
 
 ```html
 <div spinach:scenario="#scenario1">
@@ -48,7 +58,35 @@ the variables used in the scenario are scoped to that specific scenario. So a sc
 is a parent and then all the spec commands should go on HTML nodes that are children of this parent node. See the specs folder for
 examples
 
-### Set Variable
+## Table Scenario
+
+```html
+  <table spinach:table_scenario="scenario 1" class="table table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th spinach:set="firstname">First name</th>
+          <th spinach:set="lastname">Last name</th>
+          <th spinach:assert_equals="greeting.login_greeting">Greeting</th>
+          <th spinach:assert_equals="greeting.login_message">Message</th>
+          <th spinach:execute="greeting = greeting_for(firstname, lastname)"></th>
+        </tr>
+        </thead/>
+        <tbody>
+          <tr>
+            <td>Bob2</td>
+            <td>Bobbington</td>
+            <td>Hello Bob!</td>
+            <td>Your last name is Bobbington!</td>
+            <td></td>
+          </tr>
+        </tbody>
+    </table>
+```
+You add `spinach:table_scenario` to the table and then define your directives in the first row of the `thead`. You must use the `thead` and `tbody` elements. Also you must **NOT** put any directives on the first `tr` in the `thead` and instead only put directives on the `th` nodes. This is because each `tr` will be turned into a scenario and the appropriate directives dynamically added.
+
+![](.README/tables.png)
+
+## Set Variable
 
 ```html
 <p>
@@ -60,7 +98,7 @@ This will set the value `Chuck Norris` onto a variable called `#username` which 
 
 ![](.README/set_variable.png)
 
-### Assert Equals
+## Assert Equals
 
 ```html
 <blockquote>
@@ -86,7 +124,7 @@ A second way to use assert_equals is when there is just a variable being asserte
 
 ![](.README/assert_equals_with_variable.png)
 
-### Execute
+## Execute
 
 ```html
 <p spinach:execute="#greeting = greeting_for(#firstname, #lastname)">
@@ -103,7 +141,7 @@ When returning a result in an execute you **MUST** return a `HashMap`
 
 ![](.README/execute_function.png)
 
-### Implementation Status
+## Implementation Status
 
 ```html
 <div spinach:scenario="#scenario 2" spinach:status="expected_to_fail">
