@@ -382,8 +382,10 @@ def test_summary(data)
   exit total_failed
 end
 
+template_location = ENV["SPINACH_LOCATION"]? || location
+
 results = all_test_cases.map do |test|
-  test.new.run(test, location)
+  test.new.run(test, template_location)
 end
 
 test_summary(results)
