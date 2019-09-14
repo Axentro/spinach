@@ -160,6 +160,12 @@ You can add the `status` directive to either the node with `spinach:scenario` to
 
 To run a spec you can do the following:
 
+NOTE - if you get a compiler crash while running then use the `--no-debug` flag when running and report the crash to the Crystal devs. Depending on what you put in the mapping Proc might cause the compiler to crash.
+
+e.g `crystal run --no-debug spec/*.cr` or `crystal run spec/individual_file.cr`
+
+but in general:
+
 `crystal run spec/*.cr` or `crystal run spec/individual_file.cr`
 
 if you want to put your specs somewhere else you can also do this:
@@ -234,7 +240,7 @@ The method can optionally take the arguments if needed.
 
 When running the specs locally in the project use this:
 
-`crystal run spec/*.cr -- -l "./projects/spinach/spec"`
+`crystal run --no-debug spec/*.cr -- -l "./projects/spinach/spec"`
 
 ## Contributing
 
