@@ -2,12 +2,7 @@ require "../src/spinach"
 
 class Tables < SpinachTestCase
 
-  def mapping
-    {
-      "greeting_for": ->(args : Array(String)){ greeting_for(args) }
-    }
-  end
-
+  @[Spinach]
   def greeting_for(args)
     firstname = args.first
     lastname = args.last

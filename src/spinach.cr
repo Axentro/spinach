@@ -42,7 +42,19 @@ alias VariableValue = Hash(String, String)
 alias Variables = Hash(String, VariableValue)
 
 abstract class SpinachTestCase
-  abstract def mapping : Hash(String, Proc)
+  annotation Spinach; end
+
+  def mapping
+    map = Hash(String, (Proc(Array(String), Hash(String, String)) | Proc(Array(String), String))).new
+
+    {% for method in @type.methods %}
+      {% if method.annotation(Spinach).stringify == "@[Spinach]" %}
+        map[{{method.name.stringify}}] = ->(args : Array(String)){ {{method.name}}(args) }
+      {% end %}
+     {% end %}
+
+    map
+  end
 
   # -- variables --
   @variables : Variables = {} of String => VariableValue

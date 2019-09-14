@@ -196,23 +196,17 @@ here is an example of the files:
 ```crystal
 class AssertEquals < SpinachTestCase
 
-  def mapping
-    {
-      "get_greeting": ->(args : Array(String)){ get_greeting }
-    }
-  end
-
-  def get_greeting
+  @[Spinach]
+  def get_greeting(args)
     "Hello World!"
   end
 
 end
 ```
 
-You must extend from `SpinachTestCase`. You must also provide a mapping between the base name of the method and a proc containing the methods to execute during the running of the spec.
+You must extend from `SpinachTestCase`. You must also annotate any methods that will be used by the spec from the html file. This will add the method to a mapping of *method_name* => Proc of method.
 
-The Proc **MUST** always be in the format: `->(args : Array(String){ some_method_call }`
-The method can optionally take the arguments if needed.
+The annotated method **MUST** always take a single argument of `args`. The args are passed to the method from the html where required. See the spec folder of this project for examples.
 
 ```html
 <html>
