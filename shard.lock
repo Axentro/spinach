@@ -1,6 +1,6 @@
-version: 1.0
+version: 2.0
 shards:
   myhtml:
-    github: kostya/myhtml
-    version: 1.4.2
+    git: https://github.com/kostya/myhtml.git
+    version: 1.5.4
 

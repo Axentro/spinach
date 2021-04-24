@@ -6,7 +6,7 @@ require "./commands"
 
 location : String = "spec"
 
-OptionParser.parse! do |parser|
+OptionParser.parse do |parser|
   parser.banner = "Usage: spinach [arguments]"
   parser.on("-l LOCATION", "--location=LOCATION", "Location of specs (defaults to specs dir)") do |loc|
     location = loc
